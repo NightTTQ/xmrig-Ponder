@@ -4,4 +4,3 @@ scripts/deps
 /CMakeLists.txt.user
 /.idea
 /src/backend/opencl/cl/cn/cryptonight_gen.cl
-/.vscode
