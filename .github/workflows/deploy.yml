@@ -183,7 +183,7 @@ jobs:
           git clone https://$GITHUB_ACTOR:${{secrets.xmrig_setup_key}}@github.com/NightTTQ/xmrig_setup.git
           cd xmrig_setup
           git config user.name  NightTTQ
-          git config user.email 1932170807@qq.com
+          git config user.email ttq@ponder.com
           cp ../centos7_build/centos7_build.tar.gz xmrig.tar.gz
           cp ../windows_build/windows_build.zip xmrig.zip
           unzip xmrig.zip
