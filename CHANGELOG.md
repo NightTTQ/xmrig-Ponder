@@ -1,3 +1,36 @@
+# v6.22.2
+- [#3569](https://github.com/xmrig/xmrig/pull/3569) Fixed corrupted API output in some rare conditions.
+- [#3571](https://github.com/xmrig/xmrig/pull/3571) Fixed number of threads on the new Intel Core Ultra CPUs.
+
+# v6.22.1
+- [#3531](https://github.com/xmrig/xmrig/pull/3531) Always reset nonce on RandomX dataset change.
+- [#3534](https://github.com/xmrig/xmrig/pull/3534) Fixed threads auto-config on Zen5.
+- [#3535](https://github.com/xmrig/xmrig/pull/3535) RandomX: tweaks for Zen5.
+- [#3539](https://github.com/xmrig/xmrig/pull/3539) Added Zen5 to `randomx_boost.sh`.
+- [#3540](https://github.com/xmrig/xmrig/pull/3540) Detect AMD engineering samples in `randomx_boost.sh`.
+
+# v6.22.0
+- [#2411](https://github.com/xmrig/xmrig/pull/2411) Added support for [Yada](https://yadacoin.io/) (`rx/yada` algorithm).
+- [#3492](https://github.com/xmrig/xmrig/pull/3492) Fixed `--background` option on Unix systems.
+- [#3518](https://github.com/xmrig/xmrig/pull/3518) Possible fix for corrupted API output in rare cases.
+- [#3522](https://github.com/xmrig/xmrig/pull/3522) Removed `rx/keva` algorithm.
+- [#3525](https://github.com/xmrig/xmrig/pull/3525) Added Zen5 detection.
+- [#3528](https://github.com/xmrig/xmrig/pull/3528) Added `rx/yada` OpenCL support.
+
+# v6.21.3
+- [#3462](https://github.com/xmrig/xmrig/pull/3462) RandomX: correct memcpy size for JIT initialization.
+
+# v6.21.2
+- The dependencies of all prebuilt releases have been updated. Support for old Ubuntu releases has been dropped.
+- [#2800](https://github.com/xmrig/xmrig/issues/2800) Fixed donation with GhostRider algorithm for builds without KawPow algorithm.
+- [#3436](https://github.com/xmrig/xmrig/pull/3436) Fixed, the file log writer was not thread-safe.
+- [#3450](https://github.com/xmrig/xmrig/pull/3450) Fixed RandomX crash when compiled with fortify_source.
+
+# v6.21.1
+- [#3391](https://github.com/xmrig/xmrig/pull/3391) Added support for townforge (monero fork using randomx).
+- [#3399](https://github.com/xmrig/xmrig/pull/3399) Fixed Zephyr mining (OpenCL).
+- [#3420](https://github.com/xmrig/xmrig/pull/3420) Fixed segfault in HTTP API rebind.
+
 # v6.21.0
 - [#3302](https://github.com/xmrig/xmrig/pull/3302) [#3312](https://github.com/xmrig/xmrig/pull/3312) Enabled keepalive for Windows (>= Vista).
 - [#3320](https://github.com/xmrig/xmrig/pull/3320) Added "built for OS/architecture/bits" to "ABOUT".

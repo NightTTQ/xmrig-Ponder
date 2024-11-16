@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.5)
 project(xmrig)
 
 option(WITH_HWLOC           "Enable hwloc support" ON)
@@ -131,6 +131,8 @@ set(SOURCES_CRYPTO
     src/crypto/common/MemoryPool.cpp
     src/crypto/common/Nonce.cpp
     src/crypto/common/VirtualMemory.cpp
+    src/crypto/flex/flex.cpp
+    src/crypto/flex/flex_keccak.c
    )
 
 if (WITH_MO_BENCHMARK)
@@ -171,7 +173,7 @@ if (XMRIG_OS_WIN)
         src/crypto/common/VirtualMemory_win.cpp
         )
 
-    set(EXTRA_LIBS ws2_32 psapi iphlpapi userenv)
+    set(EXTRA_LIBS ws2_32 psapi iphlpapi userenv dbghelp)
 elseif (XMRIG_OS_APPLE)
     list(APPEND SOURCES_OS
         src/App_unix.cpp

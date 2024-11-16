@@ -25,6 +25,8 @@
 #include "backend/opencl/runners/OclRxBaseRunner.h"
 #include "backend/opencl/kernels/rx/Blake2bHashRegistersKernel.h"
 #include "backend/opencl/kernels/rx/Blake2bInitialHashKernel.h"
+#include "backend/opencl/kernels/rx/Blake2bInitialHashDoubleKernel.h"
+#include "backend/opencl/kernels/rx/Blake2bInitialHashBigKernel.h"
 #include "backend/opencl/kernels/rx/FillAesKernel.h"
 #include "backend/opencl/kernels/rx/FindSharesKernel.h"
 #include "backend/opencl/kernels/rx/HashAesKernel.h"
@@ -71,6 +73,8 @@ xmrig::OclRxBaseRunner::~OclRxBaseRunner()
     delete m_fillAes4Rx4_entropy;
     delete m_hashAes1Rx4;
     delete m_blake2b_initial_hash;
+    delete m_blake2b_initial_hash_double;
+    delete m_blake2b_initial_hash_big;
     delete m_blake2b_hash_registers_32;
     delete m_blake2b_hash_registers_64;
     delete m_find_shares;
@@ -83,16 +87,34 @@ xmrig::OclRxBaseRunner::~OclRxBaseRunner()
 }
 
 
-void xmrig::OclRxBaseRunner::run(uint32_t nonce, uint32_t *hashOutput)
+void xmrig::OclRxBaseRunner::run(uint32_t nonce, uint32_t nonce_offset, uint32_t *hashOutput)
 {
     static const uint32_t zero = 0;
 
-    m_blake2b_initial_hash->setNonce(nonce);
+    if (m_jobSize <= 128) {
+        m_blake2b_initial_hash->setNonce(nonce);
+    }
+    else if (m_jobSize <= 256) {
+        m_blake2b_initial_hash_double->setNonce(nonce);
+    }
+    else {
+        m_blake2b_initial_hash_big->setNonce(nonce, nonce_offset);
+    }
+
     m_find_shares->setNonce(nonce);
 
     enqueueWriteBuffer(m_output, CL_FALSE, sizeof(cl_uint) * 0xFF, sizeof(uint32_t), &zero);
 
-    m_blake2b_initial_hash->enqueue(m_queue, m_intensity);
+    if (m_jobSize <= 128) {
+        m_blake2b_initial_hash->enqueue(m_queue, m_intensity);
+    }
+    else if (m_jobSize <= 256) {
+        m_blake2b_initial_hash_double->enqueue(m_queue, m_intensity);
+    }
+    else {
+        m_blake2b_initial_hash_big->enqueue(m_queue, m_intensity);
+    }
+
     m_fillAes1Rx4_scratchpad->enqueue(m_queue, m_intensity);
 
     const uint32_t programCount = RxAlgo::programCount(m_algorithm);
@@ -132,9 +154,16 @@ void xmrig::OclRxBaseRunner::set(const Job &job, uint8_t *blob)
         memset(blob + job.size(), 0, Job::kMaxBlobSize - job.size());
     }
 
+    memset(blob + job.nonceOffset(), 0, job.nonceSize());
+
     enqueueWriteBuffer(m_input, CL_TRUE, 0, Job::kMaxBlobSize, blob);
 
+    m_jobSize = job.size();
+
     m_blake2b_initial_hash->setBlobSize(job.size());
+    m_blake2b_initial_hash_double->setBlobSize(job.size());
+    m_blake2b_initial_hash_big->setBlobSize(job.size());
+
     m_find_shares->setTarget(job.target());
 }
 
@@ -165,6 +194,12 @@ void xmrig::OclRxBaseRunner::build()
 
     m_blake2b_initial_hash = new Blake2bInitialHashKernel(m_program);
     m_blake2b_initial_hash->setArgs(m_hashes, m_input);
+
+    m_blake2b_initial_hash_double = new Blake2bInitialHashDoubleKernel(m_program);
+    m_blake2b_initial_hash_double->setArgs(m_hashes, m_input);
+
+    m_blake2b_initial_hash_big = new Blake2bInitialHashBigKernel(m_program);
+    m_blake2b_initial_hash_big->setArgs(m_hashes, m_input);
 
     m_blake2b_hash_registers_32 = new Blake2bHashRegistersKernel(m_program, "blake2b_hash_registers_32");
     m_blake2b_hash_registers_64 = new Blake2bHashRegistersKernel(m_program, "blake2b_hash_registers_64");

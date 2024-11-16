@@ -21,6 +21,7 @@
 #include <map>
 #include "net/interfaces/IJobResultListener.h"
 #include "base/crypto/Algorithm.h"
+#include "base/net/stratum/Job.h"
 #include "rapidjson/fwd.h"
 
 #include <memory>
@@ -33,59 +34,59 @@ class Job;
 
 class MoBenchmark : public IJobResultListener {
 
-        enum BenchAlgo : int {
-            GHOSTRIDER_RTM,  // "ghostrider"       GhostRider
-            CN_R,            // "cn/r"             CryptoNightR (Monero's variant 4).
-            CN_LITE_1,       // "cn-lite/1"        CryptoNight-Lite variant 1.
-            CN_HEAVY_XHV,    // "cn-heavy/xhv"     CryptoNight-Heavy (modified, Haven Protocol only).
-            CN_PICO_0,       // "cn-pico"          CryptoNight-Pico.
-            CN_CCX,          // "cn/ccx"           Conceal (CCX).
-            CN_GPU,          // "cn/gpu"           CryptoNight-GPU (Ryo).
-            AR2_CHUKWA_V2,   // "argon2/chukwav2"  Argon2id (Chukwa v2).
-            KAWPOW_RVN,      // "kawpow/rvn"       KawPow (RVN)
-            RX_0,            // "rx/0"             RandomX (Monero).
-            RX_GRAFT,        // "rx/graft"         RandomGraft (Graft).
-            RX_ARQ,          // "rx/arq"           RandomARQ (Arqma).
-            RX_XLA,          // "panthera"         Panthera (Scala2).
-            MAX,
-            MIN = 0,
-            INVALID = -1,
-        };
-
-        const Algorithm::Id ba2a[BenchAlgo::MAX] = {
-            Algorithm::GHOSTRIDER_RTM,
+        const Algorithm::Id bench_algos[15] = {
             Algorithm::CN_R,
+#           ifdef XMRIG_ALGO_CN_LITE
             Algorithm::CN_LITE_1,
-            Algorithm::CN_HEAVY_XHV,
+#           endif
+#           ifdef XMRIG_ALGO_CN_PICO
             Algorithm::CN_PICO_0,
+#           endif
             Algorithm::CN_CCX,
+#           ifdef XMRIG_ALGO_CN_GPU
             Algorithm::CN_GPU,
+#           endif
+#           ifdef XMRIG_ALGO_ARGON2
             Algorithm::AR2_CHUKWA_V2,
+#           endif
+#           ifdef XMRIG_ALGO_KAWPOW
             Algorithm::KAWPOW_RVN,
+#           endif
+            // below here use prefetch-disabled MSR setup, keep them grouped
+            // so MSR setting doesn't have to flip back and forth
+#           ifdef XMRIG_ALGO_GHOSTRIDER
+            Algorithm::GHOSTRIDER_RTM,
+            Algorithm::FLEX_KCN,
+#           endif
+#           ifdef XMRIG_ALGO_CN_HEAVY
+            Algorithm::CN_HEAVY_XHV,
+#           endif
+#           ifdef XMRIG_ALGO_RANDOMX
             Algorithm::RX_0,
             Algorithm::RX_GRAFT,
             Algorithm::RX_ARQ,
             Algorithm::RX_XLA,
+#           endif
+            Algorithm::INVALID
         };
 
-        Job* m_bench_job[BenchAlgo::MAX];
-        double m_bench_algo_perf[BenchAlgo::MAX];
+        Job m_bench_job;
 
         Controller *m_controller;          // to get access to config and network
         bool m_isNewBenchRun;              // true if benchmark is need to be executed or was executed
-        MoBenchmark::BenchAlgo m_bench_algo; // current perf algo we benchmark
+        uint64_t m_bench_algo;             // current perf algo number we benchmark (in bench_algos array)
         uint64_t m_hash_count;             // number of hashes calculated for current perf algo
         uint64_t m_time_start;             // time of the first resultt for current perf algo (in ms)
         uint64_t m_bench_start;            // time of measurements start for current perf algo (in ms) after all backends are started
         unsigned m_enabled_backend_count;  // number of active miner backends
         std::set<uint32_t> m_backends_started; // id of backend started for benchmark
 
-        uint64_t get_now() const;                      // get current time in ms
-        double get_algo_perf(Algorithm::Id algo) const; // get algo perf based on m_bench_algo_perf
-        void start(const MoBenchmark::BenchAlgo);        // start benchmark for specified perf algo
-        void finish();                                 // end of benchmarks, switch to jobs from the pool (network), fill algo_perf
-        void onJobResult(const JobResult&) override;   // onJobResult is called after each computed benchmark hash
-        void run_next_bench_algo(BenchAlgo);           // run next bench algo or finish benchmark for the last one
+        uint64_t get_now() const;                       // get current time in ms
+        double get_algo_perf(Algorithm::Id algo) const; // get algo perf based on algo_perf known perf numbers
+        void start();                                   // start benchmark for m_bench_algo number
+        void finish();                                  // end of benchmarks, switch to jobs from the pool (network), fill algo_perf
+        void onJobResult(const JobResult&) override;    // onJobResult is called after each computed benchmark hash
+        void run_next_bench_algo();                     // run next bench algo or finish benchmark for the last one
 
     public:
         MoBenchmark();
@@ -93,7 +94,8 @@ class MoBenchmark : public IJobResultListener {
 
         void set_controller(std::shared_ptr<Controller> controller) { m_controller = controller.get(); }
 
-        void start(); // start benchmarks
+        void start_perf(); // start benchmarks
+        void flush_perf();
 
         bool isNewBenchRun() const { return m_isNewBenchRun; }
         mutable std::map<Algorithm::Id, double> algo_perf;

@@ -91,6 +91,16 @@ RandomX_ConfigurationArqma::RandomX_ConfigurationArqma()
 	ScratchpadL3_Size = 262144;
 }
 
+RandomX_ConfigurationEquilibria::RandomX_ConfigurationEquilibria()
+{
+  ArgonIterations = 1;
+  ArgonSalt = "RandomXEQ\x01";
+  ProgramIterations = 1024;
+  ProgramCount = 4;
+  ScratchpadL2_Size = 131072;
+  ScratchpadL3_Size = 262144;
+}
+
 RandomX_ConfigurationGraft::RandomX_ConfigurationGraft()
 {
 	ArgonLanes = 2;
@@ -110,6 +120,13 @@ RandomX_ConfigurationKeva::RandomX_ConfigurationKeva()
 	ArgonSalt = "RandomKV\x01";
 	ScratchpadL2_Size = 131072;
 	ScratchpadL3_Size = 1048576;
+}
+
+RandomX_ConfigurationYada::RandomX_ConfigurationYada()
+{
+	ArgonSalt = "RandomXYadaCoin\x03";
+	SuperscalarLatency = 150;
+	ArgonIterations = 4;
 }
 
 RandomX_ConfigurationScala::RandomX_ConfigurationScala()
@@ -137,6 +154,7 @@ RandomX_ConfigurationBase::RandomX_ConfigurationBase()
 	, ArgonIterations(3)
 	, ArgonLanes(1)
 	, ArgonSalt("RandomX\x03")
+        , SuperscalarLatency(170)
 	, ScratchpadL1_Size(16384)
 	, ScratchpadL2_Size(262144)
 	, ScratchpadL3_Size(2097152)
@@ -260,7 +278,7 @@ void RandomX_ConfigurationBase::Apply()
 	*(uint32_t*)(codeReadDatasetRyzenTweaked + 24) = DatasetBaseMask;
 	*(uint32_t*)(codeReadDatasetTweaked + 7) = DatasetBaseMask;
 	*(uint32_t*)(codeReadDatasetTweaked + 23) = DatasetBaseMask;
-	//*(uint32_t*)(codeReadDatasetLightSshInitTweaked + 59) = DatasetBaseMask;
+//	*(uint32_t*)(codeReadDatasetLightSshInitTweaked + 59) = DatasetBaseMask;
 
 	const bool hasBMI2 = xmrig::Cpu::info()->hasBMI2();
 
@@ -301,7 +319,7 @@ typedef void(randomx::JitCompilerX86::* InstructionGeneratorX86_2)(const randomx
 
 #define JIT_HANDLE(x, prev) do { \
 		const InstructionGeneratorX86_2 p = &randomx::JitCompilerX86::h_##x; \
-		memcpy(randomx::JitCompilerX86::engine + k, &p, sizeof(p)); \
+		memcpy(randomx::JitCompilerX86::engine + k, &p, sizeof(randomx::JitCompilerX86::engine[k])); \
 	} while (0)
 
 #elif (XMRIG_ARM == 8)
@@ -396,10 +414,12 @@ typedef void(randomx::JitCompilerX86::* InstructionGeneratorX86_2)(const randomx
 RandomX_ConfigurationMonero RandomX_MoneroConfig;
 RandomX_ConfigurationWownero RandomX_WowneroConfig;
 RandomX_ConfigurationArqma RandomX_ArqmaConfig;
+RandomX_ConfigurationEquilibria RandomX_EquilibriaConfig;
 RandomX_ConfigurationGraft RandomX_GraftConfig;
 RandomX_ConfigurationSafex RandomX_SafexConfig;
 RandomX_ConfigurationKeva RandomX_KevaConfig;
 RandomX_ConfigurationScala RandomX_ScalaConfig;
+RandomX_ConfigurationYada RandomX_YadaConfig;
 
 alignas(64) RandomX_ConfigurationBase RandomX_CurrentConfig;
 

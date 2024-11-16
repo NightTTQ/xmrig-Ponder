@@ -1,7 +1,7 @@
 /* XMRig
  * Copyright (c) 2019      Howard Chu  <https://github.com/hyc>
- * Copyright (c) 2018-2021 SChernykh   <https://github.com/SChernykh>
- * Copyright (c) 2016-2021 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright (c) 2018-2024 SChernykh   <https://github.com/SChernykh>
+ * Copyright (c) 2016-2024 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ public:
         MODE_POOL,
         MODE_DAEMON,
         MODE_SELF_SELECT,
-#       ifdef XMRIG_ALGO_KAWPOW
+#       if defined XMRIG_ALGO_KAWPOW || defined XMRIG_ALGO_GHOSTRIDER
         MODE_AUTO_ETH,
 #       endif
 #       ifdef XMRIG_FEATURE_BENCHMARK
@@ -61,7 +61,7 @@ public:
     static const char *kCoin;
     static const char *kDaemon;
     static const char *kDaemonPollInterval;
-    static const char* kDaemonJobTimeout;
+    static const char *kDaemonJobTimeout;
     static const char *kEnabled;
     static const char *kFingerprint;
     static const char *kKeepalive;
@@ -72,11 +72,11 @@ public:
     static const char *kSOCKS5;
     static const char *kSubmitToOrigin;
     static const char *kTls;
-    static const char* kSni;
+    static const char *kSni;
     static const char *kUrl;
     static const char *kUser;
-    static const char* kSpendSecretKey;
-    static const char* kDaemonZMQPort;
+    static const char *kSpendSecretKey;
+    static const char *kDaemonZMQPort;
     static const char *kNicehashHost;
 
     constexpr static int kKeepAliveTimeout         = 60;
@@ -155,11 +155,7 @@ private:
     bool m_submitToOrigin           = false;
     Coin m_coin;
     int m_keepAlive                 = 0;
-#   ifdef XMRIG_ALGO_KAWPOW
-    Mode m_mode                     = MODE_AUTO_ETH;
-#   else
     Mode m_mode                     = MODE_POOL;
-#   endif
     ProxyUrl m_proxy;
     std::bitset<FLAG_MAX> m_flags   = 0;
     String m_fingerprint;

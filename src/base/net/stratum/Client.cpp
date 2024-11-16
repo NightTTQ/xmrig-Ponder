@@ -1,7 +1,7 @@
 /* XMRig
  * Copyright (c) 2019      jtgrassie   <https://github.com/jtgrassie>
- * Copyright (c) 2018-2023 SChernykh   <https://github.com/SChernykh>
- * Copyright (c) 2016-2023 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
+ * Copyright (c) 2018-2024 SChernykh   <https://github.com/SChernykh>
+ * Copyright (c) 2016-2024 XMRig       <https://github.com/xmrig>, <support@xmrig.com>
  *
  *   This program is free software: you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -365,7 +365,7 @@ bool xmrig::Client::parseJob(const rapidjson::Value &params, int *code)
 
     Job job(has<EXT_NICEHASH>(), m_pool.algorithm(), m_rpcId);
 
-    if (!job.setId(params["job_id"].GetString())) {
+    if (!job.setId(Json::getString(params, "job_id"))) {
         *code = 3;
         return false;
     }
@@ -402,7 +402,7 @@ bool xmrig::Client::parseJob(const rapidjson::Value &params, int *code)
         }
     }
 
-    if (!job.setTarget(params["target"].GetString())) {
+    if (!job.setTarget(Json::getString(params, "target"))) {
         *code = 5;
         return false;
     }
@@ -611,7 +611,7 @@ bool xmrig::Client::parseLogin(const rapidjson::Value &result, int *code)
 
     parseExtensions(result);
 
-    const bool rc = parseJob(result["job"], code);
+    const bool rc = parseJob(Json::getObject(result, "job"), code);
     m_jobs = 0;
 
     return rc;
@@ -846,7 +846,7 @@ void xmrig::Client::parseResponse(int64_t id, const rapidjson::Value &result, co
         m_listener->onLoginSuccess(this);
 
         if (m_job.isValid()) {
-            m_listener->onJobReceived(this, m_job, result["job"]);
+            m_listener->onJobReceived(this, m_job, Json::getObject(result, "job"));
         }
 
         return;

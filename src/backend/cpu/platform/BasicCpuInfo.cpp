@@ -64,7 +64,7 @@ static_assert(kCpuFlagsSize == ICpuInfo::FLAG_MAX, "kCpuFlagsSize and FLAG_MAX m
 
 
 #ifdef XMRIG_FEATURE_MSR
-constexpr size_t kMsrArraySize                                  = 6;
+constexpr size_t kMsrArraySize                                  = 7;
 static const std::array<const char *, kMsrArraySize> msrNames   = { MSR_NAMES_LIST };
 static_assert(kMsrArraySize == ICpuInfo::MSR_MOD_MAX, "kMsrArraySize and MSR_MOD_MAX mismatch");
 #endif
@@ -260,6 +260,11 @@ xmrig::BasicCpuInfo::BasicCpuInfo() :
                     }
                     break;
 
+                case 0x1a:
+                    m_arch = ARCH_ZEN5;
+                    m_msrMod = MSR_MOD_RYZEN_1AH_ZEN5;
+                    break;
+
                 default:
                     m_msrMod = MSR_MOD_NONE;
                     break;
@@ -386,8 +391,11 @@ xmrig::CpuThreads xmrig::BasicCpuInfo::threads(const Algorithm &algorithm, uint3
 #   endif
 
 #   ifdef XMRIG_ALGO_GHOSTRIDER
-    if (f == Algorithm::GHOSTRIDER) {
-        return CpuThreads(std::max<size_t>(count / 2, 1), 8);
+    switch (algorithm.id()) {
+        case Algorithm::GHOSTRIDER_RTM: return CpuThreads(std::max<size_t>(count_limit2, 1), 8);
+        case Algorithm::FLEX_KCN:       return CpuThreads(std::max<size_t>(count_limit2, 1), 1);
+        default:
+            break;
     }
 #   endif
 

@@ -34,12 +34,15 @@ public:
         INVALID,
         MONERO,
         SUMO,
-        ARQMA,
+        ARQ,
+        XEQ,
         GRAFT,
         KEVA,
         RAVEN,
         WOWNERO,
         ZEPHYR,
+        TOWNFORGE,
+        YADA,
         MAX
     };
 

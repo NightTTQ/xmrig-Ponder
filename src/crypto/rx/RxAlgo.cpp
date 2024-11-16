@@ -36,7 +36,11 @@ const RandomX_ConfigurationBase *xmrig::RxAlgo::base(Algorithm::Id algorithm)
         return &RandomX_WowneroConfig;
 
     case Algorithm::RX_ARQ:
+//    case Algorithm::RX_XEQ:
         return &RandomX_ArqmaConfig;
+
+    case Algorithm::RX_XEQ:
+        return &RandomX_EquilibriaConfig;
 
     case Algorithm::RX_GRAFT:
         return &RandomX_GraftConfig;
@@ -44,8 +48,8 @@ const RandomX_ConfigurationBase *xmrig::RxAlgo::base(Algorithm::Id algorithm)
     case Algorithm::RX_SFX:
         return &RandomX_SafexConfig;
 
-    case Algorithm::RX_KEVA:
-        return &RandomX_KevaConfig;
+    case Algorithm::RX_YADA:
+        return &RandomX_YadaConfig;
 
     case Algorithm::RX_XLA:
         return &RandomX_ScalaConfig;
