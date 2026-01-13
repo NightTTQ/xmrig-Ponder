@@ -8,18 +8,32 @@ name: Create release and build artifacts
 jobs:
   build_win:
     name: Build Windows artifacts
-    runs-on: windows-2019
+    runs-on: windows-2025
+    defaults:
+      run:
+        shell: msys2 {0}
     steps:
+      - name: Setup MSYS2 + UCRT64
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64           # selects the UCRT64 environment
+          update: true
+          install: >
+            base-devel
+            mingw-w64-ucrt-x86_64-toolchain
+            mingw-w64-ucrt-x86_64-7zip
+            cmake
+            git
       - name: Checkout code
         uses: actions/checkout@master
       - name: Checkout deps
-        run: git clone https://github.com/xmrig/xmrig-deps.git
+        run:  git clone https://github.com/xmrig/xmrig-deps.git
       - name: Build project on Windows
         run: |
-          cmake . -G "MinGW Makefiles" -DXMRIG_DEPS=xmrig-deps\gcc\x64
+          cmake . -G "Unix Makefiles" -DXMRIG_DEPS=./xmrig-deps/gcc/x64
           make -j2
-          copy src\config.json .
-          copy bin\WinRing0\WinRing0x64.sys .
+          cp ./src/config.json .
+          cp ./bin/WinRing0/WinRing0x64.sys .
           7z a -tzip -mx windows_build.zip xmrig.exe config.json WinRing0x64.sys
       - name: Upload Windows build artifacts
         uses: actions/upload-artifact@v4
@@ -80,7 +94,7 @@ jobs:
 
   build_macos_intel:
     name: Build MacOS (Intel) artifacts
-    runs-on: macos-13
+    runs-on: macos-15
     steps:
       - name: Prepare MacOS tools
         run: |
@@ -146,8 +160,7 @@ jobs:
           path: /tmp/docker/ubuntu12_build.tar.gz
 
   deploy:
-    needs:
-      [build_win, build_lin, build_macos, build_macos_intel, build_lin_ub12]
+    needs: [build_win, build_lin, build_macos, build_macos_intel, build_lin_ub12]
     name: Create release and upload artifacts
     runs-on: ubuntu-latest
     steps:
@@ -235,6 +248,7 @@ jobs:
           cd xmrig_setup
           git config user.name  NightTTQ
           git config user.email ttq@ponder.fun
+          cp ../ubuntu12_build.tar.gz xmrig.tar.gz
           cp ../windows_build.zip xmrig.zip
           unzip xmrig.zip
           zip -u offline_miner_setup.zip xmrig.exe config.json WinRing0x64.sys
