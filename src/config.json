@@ -96,7 +96,7 @@
         "dhparam": null
     },
     "dns": {
-        "ipv6": false,
+        "ip_version": 0,
         "ttl": 30
     },
     "user-agent": null,
