@@ -121,6 +121,28 @@ jobs:
           name: macos_build_intel
           path: macos_build_intel.tar.gz
 
+  build_lin_arm64:
+    name: Build Ubuntu ARM64 artifacts
+    runs-on: ubuntu-22.04-arm64
+    steps:
+      - name: Prepare Ubuntu tools
+        run: |
+          sudo apt update
+          sudo apt install -y git build-essential cmake libuv1-dev libssl-dev libhwloc-dev
+      - name: Checkout code
+        uses: actions/checkout@master
+      - name: Build project on Ubuntu ARM64
+        run: |
+          cmake .
+          make -j$(nproc)
+          cp src/config.json .
+          tar cfz ubuntu_arm64_build.tar.gz xmrig config.json
+      - name: Upload Ubuntu ARM64 build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ubuntu_arm64_build
+          path: ubuntu_arm64_build.tar.gz
+
   build_lin_ub12:
     name: Build Ubuntu 12.04 artifacts
     runs-on: ubuntu-latest
@@ -160,7 +182,7 @@ jobs:
           path: /tmp/docker/ubuntu12_build.tar.gz
 
   deploy:
-    needs: [build_win, build_lin, build_macos, build_macos_intel, build_lin_ub12]
+    needs: [build_win, build_lin, build_macos, build_macos_intel, build_lin_arm64, build_lin_ub12]
     name: Create release and upload artifacts
     runs-on: ubuntu-latest
     steps:
@@ -197,6 +219,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ubuntu12_build
+      - name: Download Ubuntu ARM64 build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ubuntu_arm64_build
       - name: Upload Windows build release asset
         uses: actions/upload-release-asset@v1.0.1
         env:
@@ -241,6 +267,15 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ubuntu12_build.tar.gz
           asset_name: xmrig-${{steps.version.outputs.VERSION}}-lin64-compat.tar.gz
+          asset_content_type: application/zip
+      - name: Upload Ubuntu ARM64 build release asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ubuntu_arm64_build.tar.gz
+          asset_name: xmrig-${{steps.version.outputs.VERSION}}-lin-arm64.tar.gz
           asset_content_type: application/zip
       - name: Update xmrig_setup repo
         run: |
