@@ -123,20 +123,28 @@ jobs:
 
   build_lin_arm64:
     name: Build Ubuntu ARM64 artifacts
-    runs-on: ubuntu-22.04-arm64
+    runs-on: ubuntu-latest
     steps:
-      - name: Prepare Ubuntu tools
-        run: |
-          sudo apt update
-          sudo apt install -y git build-essential cmake libuv1-dev libssl-dev libhwloc-dev
+      - name: Set up QEMU for ARM64 emulation
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
       - name: Checkout code
         uses: actions/checkout@master
-      - name: Build project on Ubuntu ARM64
+      - name: Build inside ARM64 Docker container
         run: |
-          cmake .
-          make -j$(nproc)
-          cp src/config.json .
-          tar cfz ubuntu_arm64_build.tar.gz xmrig config.json
+          docker run --rm --platform linux/arm64 \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace \
+            ubuntu:22.04 /bin/bash -c "
+              set -e
+              apt-get update
+              apt-get install -y git build-essential cmake libuv1-dev libssl-dev libhwloc-dev
+              cmake .
+              make -j\$(nproc)
+              cp src/config.json .
+              tar cfz ubuntu_arm64_build.tar.gz xmrig config.json
+            "
       - name: Upload Ubuntu ARM64 build artifacts
         uses: actions/upload-artifact@v4
         with:
