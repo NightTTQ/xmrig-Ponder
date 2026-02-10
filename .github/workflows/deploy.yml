@@ -291,11 +291,34 @@ jobs:
           cd xmrig_setup
           git config user.name  NightTTQ
           git config user.email ttq@ponder.fun
-          cp ../ubuntu12_build.tar.gz xmrig.tar.gz
-          cp ../windows_build.zip xmrig.zip
-          unzip xmrig.zip
+
+          # Windows x64
+          cp ../windows_build.zip xmrig-win64.zip
+          unzip -o ../windows_build.zip
           zip -u offline_miner_setup.zip xmrig.exe config.json WinRing0x64.sys
-          git commit -m "xmrig "$GITHUB_REF_NAME" based release" xmrig.tar.gz xmrig.zip offline_miner_setup.zip
+          rm -f xmrig.exe config.json WinRing0x64.sys
+
+          # Linux x86_64 (Ubuntu 22.04)
+          cp ../ubuntu_build.tar.gz xmrig-lin64.tar.gz
+
+          # Linux x86_64 compat (Ubuntu 12.04 static)
+          cp ../ubuntu12_build.tar.gz xmrig-lin64-compat.tar.gz
+
+          # Linux ARM64
+          cp ../ubuntu_arm64_build.tar.gz xmrig-lin-arm64.tar.gz
+
+          # macOS ARM64
+          cp ../macos_build.tar.gz xmrig-mac-arm64.tar.gz
+
+          # macOS Intel
+          cp ../macos_build_intel.tar.gz xmrig-mac-intel.tar.gz
+
+          # Backward compatibility: keep legacy names pointing to recommended versions
+          cp xmrig-lin64-compat.tar.gz xmrig.tar.gz
+          cp xmrig-win64.zip xmrig.zip
+
+          git add xmrig-win64.zip xmrig-lin64.tar.gz xmrig-lin64-compat.tar.gz xmrig-lin-arm64.tar.gz xmrig-mac-arm64.tar.gz xmrig-mac-intel.tar.gz xmrig.tar.gz xmrig.zip offline_miner_setup.zip
+          git commit -m "xmrig $GITHUB_REF_NAME based release"
           git push
           cd ..
       # - name: Update hiveos repo
