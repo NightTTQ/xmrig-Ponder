@@ -166,12 +166,13 @@ jobs:
       - name: Build inside ARM64 Docker (Ubuntu 20.04, static deps)
         run: |
           docker run --rm --platform linux/arm64 \
+            -e DEBIAN_FRONTEND=noninteractive \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
             ubuntu:20.04 /bin/bash -c "
               set -e
               apt-get update
-              apt-get install -y git build-essential cmake wget autoconf automake libtool perl
+              apt-get install -y -o Dpkg::Options::='--force-confdef' -o Dpkg::Options::='--force-confold' git build-essential cmake wget autoconf automake libtool perl
               (cd scripts && ./build_deps.sh && cd ..)
               cmake . -DXMRIG_DEPS=scripts/deps
               make -j\$(nproc)
