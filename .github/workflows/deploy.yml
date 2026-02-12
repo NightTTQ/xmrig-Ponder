@@ -6,8 +6,35 @@ on:
 name: Create release and build artifacts
 
 jobs:
-  build_win:
-    name: Build Windows artifacts
+  build_win_msvc:
+    name: Build Windows (MSVC) artifacts
+    runs-on: windows-2025
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@master
+      - name: Checkout deps
+        run: git clone https://github.com/xmrig/xmrig-deps.git
+      - name: Build project on Windows (MSVC)
+        run: |
+          mkdir build
+          cd build
+          cmake .. -G "Visual Studio 17 2022" -A x64 -DXMRIG_DEPS=${{ github.workspace }}/xmrig-deps/msvc2022/x64
+          cmake --build . --config Release
+          cd ..
+      - name: Package Windows MSVC build
+        run: |
+          Copy-Item build\Release\xmrig.exe -Destination .
+          Copy-Item src\config.json -Destination .
+          Copy-Item bin\WinRing0\WinRing0x64.sys -Destination .
+          Compress-Archive -Path xmrig.exe, config.json, WinRing0x64.sys -DestinationPath windows_build_msvc.zip
+      - name: Upload Windows MSVC build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows_build_msvc
+          path: windows_build_msvc.zip
+
+  build_win_gcc:
+    name: Build Windows (GCC) artifacts
     runs-on: windows-2025
     defaults:
       run:
@@ -16,7 +43,7 @@ jobs:
       - name: Setup MSYS2 + UCRT64
         uses: msys2/setup-msys2@v2
         with:
-          msystem: UCRT64           # selects the UCRT64 environment
+          msystem: UCRT64 # selects the UCRT64 environment
           update: true
           install: >
             base-devel
@@ -27,19 +54,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@master
       - name: Checkout deps
-        run:  git clone https://github.com/xmrig/xmrig-deps.git
-      - name: Build project on Windows
+        run: git clone https://github.com/xmrig/xmrig-deps.git
+      - name: Build project on Windows (GCC)
         run: |
           cmake . -G "Unix Makefiles" -DXMRIG_DEPS=./xmrig-deps/gcc/x64
           make -j2
           cp ./src/config.json .
           cp ./bin/WinRing0/WinRing0x64.sys .
-          7z a -tzip -mx windows_build.zip xmrig.exe config.json WinRing0x64.sys
-      - name: Upload Windows build artifacts
+          7z a -tzip -mx windows_build_gcc.zip xmrig.exe config.json WinRing0x64.sys
+      - name: Upload Windows GCC build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: windows_build
-          path: windows_build.zip
+          name: windows_build_gcc
+          path: windows_build_gcc.zip
 
   build_lin:
     name: Build Ubuntu artifacts
@@ -190,7 +217,16 @@ jobs:
           path: /tmp/docker/ubuntu12_build.tar.gz
 
   deploy:
-    needs: [build_win, build_lin, build_macos, build_macos_intel, build_lin_arm64, build_lin_ub12]
+    needs:
+      [
+        build_win_msvc,
+        build_win_gcc,
+        build_lin_ub12,
+        build_lin,
+        build_lin_arm64,
+        build_macos,
+        build_macos_intel,
+      ]
     name: Create release and upload artifacts
     runs-on: ubuntu-latest
     steps:
@@ -207,14 +243,26 @@ jobs:
       - name: Set version
         id: version
         run: echo ::set-output name=VERSION::$GITHUB_REF_NAME
-      - name: Download Windows build artifacts
+      - name: Download Windows MSVC build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: windows_build
+          name: windows_build_msvc
+      - name: Download Windows GCC build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows_build_gcc
+      - name: Download Ubuntu 12.04 build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ubuntu12_build
       - name: Download Ubuntu build artifacts
         uses: actions/download-artifact@v4
         with:
           name: ubuntu_build
+      - name: Download Ubuntu ARM64 build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ubuntu_arm64_build
       - name: Download MacOS build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -223,22 +271,33 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: macos_build_intel
-      - name: Download Ubuntu 12.04 build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: ubuntu12_build
-      - name: Download Ubuntu ARM64 build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: ubuntu_arm64_build
-      - name: Upload Windows build release asset
+      # Asset order: Windows-MSVC, Windows-gcc, Linux-compat, Linux, Linux-arm64, Mac64, Mac-intel
+      - name: Upload Windows (MSVC) build release asset
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: windows_build.zip
+          asset_path: windows_build_msvc.zip
           asset_name: xmrig-${{steps.version.outputs.VERSION}}-win64.zip
+          asset_content_type: application/zip
+      - name: Upload Windows (GCC) build release asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: windows_build_gcc.zip
+          asset_name: xmrig-${{steps.version.outputs.VERSION}}-win64-gcc.zip
+          asset_content_type: application/zip
+      - name: Upload Ubuntu 12.04 (compat) build release asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ubuntu12_build.tar.gz
+          asset_name: xmrig-${{steps.version.outputs.VERSION}}-lin64-compat.tar.gz
           asset_content_type: application/zip
       - name: Upload Ubuntu build release asset
         uses: actions/upload-release-asset@v1.0.1
@@ -248,6 +307,15 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ubuntu_build.tar.gz
           asset_name: xmrig-${{steps.version.outputs.VERSION}}-lin64.tar.gz
+          asset_content_type: application/zip
+      - name: Upload Ubuntu ARM64 build release asset
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ubuntu_arm64_build.tar.gz
+          asset_name: xmrig-${{steps.version.outputs.VERSION}}-lin-arm64.tar.gz
           asset_content_type: application/zip
       - name: Upload MacOS build release asset
         uses: actions/upload-release-asset@v1.0.1
@@ -267,24 +335,6 @@ jobs:
           asset_path: macos_build_intel.tar.gz
           asset_name: xmrig-${{steps.version.outputs.VERSION}}-mac-intel.tar.gz
           asset_content_type: application/zip
-      - name: Upload Ubuntu 12.04 build release asset
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ubuntu12_build.tar.gz
-          asset_name: xmrig-${{steps.version.outputs.VERSION}}-lin64-compat.tar.gz
-          asset_content_type: application/zip
-      - name: Upload Ubuntu ARM64 build release asset
-        uses: actions/upload-release-asset@v1.0.1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ubuntu_arm64_build.tar.gz
-          asset_name: xmrig-${{steps.version.outputs.VERSION}}-lin-arm64.tar.gz
-          asset_content_type: application/zip
       - name: Update xmrig_setup repo
         run: |
           git clone https://$GITHUB_ACTOR:${{secrets.xmrig_setup_key}}@github.com/NightTTQ/xmrig_setup.git
@@ -292,11 +342,14 @@ jobs:
           git config user.name  NightTTQ
           git config user.email ttq@ponder.fun
 
-          # Windows x64
-          cp ../windows_build.zip xmrig-win64.zip
-          unzip -o ../windows_build.zip
+          # Windows x64 (MSVC - default, recommended)
+          cp ../windows_build_msvc.zip xmrig-win64.zip
+          unzip -o ../windows_build_msvc.zip
           zip -u offline_miner_setup.zip xmrig.exe config.json WinRing0x64.sys
           rm -f xmrig.exe config.json WinRing0x64.sys
+
+          # Windows x64 (GCC - alternative)
+          cp ../windows_build_gcc.zip xmrig-win64-gcc.zip
 
           # Linux x86_64 (Ubuntu 22.04)
           cp ../ubuntu_build.tar.gz xmrig-lin64.tar.gz
@@ -313,11 +366,11 @@ jobs:
           # macOS Intel
           cp ../macos_build_intel.tar.gz xmrig-mac-intel.tar.gz
 
-          # Backward compatibility: keep legacy names pointing to recommended versions
+          # Backward compatibility: keep legacy names pointing to recommended versions (Windows default = MSVC)
           cp xmrig-lin64-compat.tar.gz xmrig.tar.gz
           cp xmrig-win64.zip xmrig.zip
 
-          git add xmrig-win64.zip xmrig-lin64.tar.gz xmrig-lin64-compat.tar.gz xmrig-lin-arm64.tar.gz xmrig-mac-arm64.tar.gz xmrig-mac-intel.tar.gz xmrig.tar.gz xmrig.zip offline_miner_setup.zip
+          git add xmrig-win64.zip xmrig-win64-gcc.zip xmrig-lin64.tar.gz xmrig-lin64-compat.tar.gz xmrig-lin-arm64.tar.gz xmrig-mac-arm64.tar.gz xmrig-mac-intel.tar.gz xmrig.tar.gz xmrig.zip offline_miner_setup.zip
           git commit -m "xmrig $GITHUB_REF_NAME based release"
           git push
           cd ..
