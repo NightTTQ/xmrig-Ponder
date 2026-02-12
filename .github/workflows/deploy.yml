@@ -152,18 +152,18 @@ jobs:
           name: linux_x64_ubuntu22.04_jammy
           path: linux_x64_ubuntu22.04_jammy.tar.gz
 
-  # --- Linux ARM64: static (Ubuntu 20) ---
+  # --- Linux arm64: static (Ubuntu 20) ---
   build_linux_arm64_static:
-    name: Build Linux ARM64 (static)
+    name: Build Linux arm64 (static)
     runs-on: ubuntu-latest
     steps:
-      - name: Set up QEMU for ARM64
+      - name: Set up QEMU for arm64
         uses: docker/setup-qemu-action@v3
         with:
           platforms: arm64
       - name: Checkout code
         uses: actions/checkout@master
-      - name: Build inside ARM64 Docker (Ubuntu 20.04, static deps)
+      - name: Build inside arm64 Docker (Ubuntu 20.04, static deps)
         run: |
           docker run --rm --platform linux/arm64 \
             -e DEBIAN_FRONTEND=noninteractive \
@@ -179,24 +179,24 @@ jobs:
               cp src/config.json .
               tar cfz linux_arm64_static.tar.gz xmrig config.json
             "
-      - name: Upload Linux ARM64 static build artifacts
+      - name: Upload Linux arm64 static build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: linux_arm64_static
           path: linux_arm64_static.tar.gz
 
-  # --- Linux ARM64: dynamic (Ubuntu 24.04 noble) ---
+  # --- Linux arm64: dynamic (Ubuntu 24.04 noble) ---
   build_linux_arm64_ubuntu2404_noble:
-    name: Build Linux ARM64 (Ubuntu 24.04 noble, dynamic)
+    name: Build Linux arm64 (Ubuntu 24.04 noble, dynamic)
     runs-on: ubuntu-latest
     steps:
-      - name: Set up QEMU for ARM64
+      - name: Set up QEMU for arm64
         uses: docker/setup-qemu-action@v3
         with:
           platforms: arm64
       - name: Checkout code
         uses: actions/checkout@master
-      - name: Build inside ARM64 Docker (Ubuntu 24.04)
+      - name: Build inside arm64 Docker (Ubuntu 24.04)
         run: |
           docker run --rm --platform linux/arm64 \
             -v ${{ github.workspace }}:/workspace \
@@ -216,18 +216,18 @@ jobs:
           name: linux_arm64_ubuntu2404_noble
           path: linux_arm64_ubuntu24.04_noble.tar.gz
 
-  # --- Linux ARM64: dynamic (Ubuntu 22.04 jammy) ---
+  # --- Linux arm64: dynamic (Ubuntu 22.04 jammy) ---
   build_linux_arm64_ubuntu2204_jammy:
-    name: Build Linux ARM64 (Ubuntu 22.04 jammy, dynamic)
+    name: Build Linux arm64 (Ubuntu 22.04 jammy, dynamic)
     runs-on: ubuntu-latest
     steps:
-      - name: Set up QEMU for ARM64
+      - name: Set up QEMU for arm64
         uses: docker/setup-qemu-action@v3
         with:
           platforms: arm64
       - name: Checkout code
         uses: actions/checkout@master
-      - name: Build inside ARM64 Docker (Ubuntu 22.04)
+      - name: Build inside arm64 Docker (Ubuntu 22.04)
         run: |
           docker run --rm --platform linux/arm64 \
             -v ${{ github.workspace }}:/workspace \
@@ -276,8 +276,8 @@ jobs:
           name: macos_build
           path: macos_build.tar.gz
 
-  build_macos_intel:
-    name: Build MacOS (Intel) artifacts
+  build_macos_x64:
+    name: Build MacOS (x64) artifacts
     runs-on: macos-15
     steps:
       - name: Prepare MacOS tools
@@ -298,12 +298,12 @@ jobs:
           cmake . -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl -DHWLOC_INCLUDE_DIR=hwloc-2.1.0/include -DHWLOC_LIBRARY=hwloc-2.1.0/hwloc/.libs/libhwloc.a
           make -j$(sysctl -n hw.logicalcpu)
           cp src/config.json .
-          tar cfz macos_build_intel.tar.gz xmrig config.json
+          tar cfz macos_build_x64.tar.gz xmrig config.json
       - name: Upload MacOS build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: macos_build_intel
-          path: macos_build_intel.tar.gz
+          name: macos_build_x64
+          path: macos_build_x64.tar.gz
 
   deploy:
     needs:
@@ -317,7 +317,7 @@ jobs:
         build_linux_arm64_ubuntu2404_noble,
         build_linux_arm64_ubuntu2204_jammy,
         build_macos,
-        build_macos_intel,
+        build_macos_x64,
       ]
     name: Create release and upload artifacts
     runs-on: ubuntu-latest
@@ -355,15 +355,15 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: linux_x64_ubuntu22.04_jammy
-      - name: Download Linux ARM64 static build artifacts
+      - name: Download Linux arm64 static build artifacts
         uses: actions/download-artifact@v4
         with:
           name: linux_arm64_static
-      - name: Download Linux ARM64 Ubuntu 24.04 noble build artifacts
+      - name: Download Linux arm64 Ubuntu 24.04 noble build artifacts
         uses: actions/download-artifact@v4
         with:
           name: linux_arm64_ubuntu2404_noble
-      - name: Download Linux ARM64 Ubuntu 22.04 jammy build artifacts
+      - name: Download Linux arm64 Ubuntu 22.04 jammy build artifacts
         uses: actions/download-artifact@v4
         with:
           name: linux_arm64_ubuntu22.04_jammy
@@ -371,10 +371,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: macos_build
-      - name: Download macOS (Intel) build artifacts
+      - name: Download macOS (x64) build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: macos_build_intel
+          name: macos_build_x64
 
       - name: Upload Windows x64 MSVC release asset
         uses: actions/upload-release-asset@v1.0.1
@@ -383,7 +383,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: windows_build_msvc.zip
-          asset_name: xmrig-${{ steps.version.outputs.VERSION }}-Windows-x64-MSVC.zip
+          asset_name: xmrig-${{ steps.version.outputs.VERSION }}-windows-x64-msvc.zip
           asset_content_type: application/zip
       - name: Upload Windows x64 GCC release asset
         uses: actions/upload-release-asset@v1.0.1
@@ -392,7 +392,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: windows_build_gcc.zip
-          asset_name: xmrig-${{ steps.version.outputs.VERSION }}-Windows-x64-GCC.zip
+          asset_name: xmrig-${{ steps.version.outputs.VERSION }}-windows-x64-gcc.zip
           asset_content_type: application/zip
       - name: Upload Linux x64 static release asset
         uses: actions/upload-release-asset@v1.0.1
@@ -401,7 +401,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: linux_x64_static.tar.gz
-          asset_name: xmrig-${{ steps.version.outputs.VERSION }}-Linux-x64-static.tar.gz
+          asset_name: xmrig-${{ steps.version.outputs.VERSION }}-linux-x64-static.tar.gz
           asset_content_type: application/gzip
       - name: Upload Ubuntu 24.04 noble x64 release asset
         uses: actions/upload-release-asset@v1.0.1
@@ -410,7 +410,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: linux_x64_ubuntu24.04_noble.tar.gz
-          asset_name: xmrig-${{ steps.version.outputs.VERSION }}-Ubuntu-24.04-noble-x64.tar.gz
+          asset_name: xmrig-${{ steps.version.outputs.VERSION }}-ubuntu-24.04-noble-x64.tar.gz
           asset_content_type: application/gzip
       - name: Upload Ubuntu 22.04 jammy x64 release asset
         uses: actions/upload-release-asset@v1.0.1
@@ -419,52 +419,52 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: linux_x64_ubuntu22.04_jammy.tar.gz
-          asset_name: xmrig-${{ steps.version.outputs.VERSION }}-Ubuntu-22.04-jammy-x64.tar.gz
+          asset_name: xmrig-${{ steps.version.outputs.VERSION }}-ubuntu-22.04-jammy-x64.tar.gz
           asset_content_type: application/gzip
-      - name: Upload Linux ARM64 static release asset
+      - name: Upload Linux arm64 static release asset
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: linux_arm64_static.tar.gz
-          asset_name: xmrig-${{ steps.version.outputs.VERSION }}-Linux-ARM64-static.tar.gz
+          asset_name: xmrig-${{ steps.version.outputs.VERSION }}-linux-arm64-static.tar.gz
           asset_content_type: application/gzip
-      - name: Upload Ubuntu 24.04 noble ARM64 release asset
+      - name: Upload Ubuntu 24.04 noble arm64 release asset
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: linux_arm64_ubuntu24.04_noble.tar.gz
-          asset_name: xmrig-${{ steps.version.outputs.VERSION }}-Ubuntu-24.04-noble-ARM64.tar.gz
+          asset_name: xmrig-${{ steps.version.outputs.VERSION }}-ubuntu-24.04-noble-arm64.tar.gz
           asset_content_type: application/gzip
-      - name: Upload Ubuntu 22.04 jammy ARM64 release asset
+      - name: Upload Ubuntu 22.04 jammy arm64 release asset
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: linux_arm64_ubuntu22.04_jammy.tar.gz
-          asset_name: xmrig-${{ steps.version.outputs.VERSION }}-Ubuntu-22.04-jammy-ARM64.tar.gz
+          asset_name: xmrig-${{ steps.version.outputs.VERSION }}-ubuntu-22.04-jammy-arm64.tar.gz
           asset_content_type: application/gzip
-      - name: Upload macOS ARM64 release asset
+      - name: Upload macOS arm64 release asset
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: macos_build.tar.gz
-          asset_name: xmrig-${{ steps.version.outputs.VERSION }}-macOS-ARM64.tar.gz
+          asset_name: xmrig-${{ steps.version.outputs.VERSION }}-macos-arm64.tar.gz
           asset_content_type: application/gzip
-      - name: Upload macOS x64 Intel release asset
+      - name: Upload macOS x64 release asset
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: macos_build_intel.tar.gz
-          asset_name: xmrig-${{ steps.version.outputs.VERSION }}-macOS-x64-Intel.tar.gz
+          asset_path: macos_build_x64.tar.gz
+          asset_name: xmrig-${{ steps.version.outputs.VERSION }}-macos-x64.tar.gz
           asset_content_type: application/gzip
 
       - name: Update xmrig_setup repo
@@ -475,37 +475,37 @@ jobs:
           git config user.email ttq@ponder.fun
 
           # Windows x64 (MSVC = default, GCC = alternative)
-          cp ../windows_build_msvc.zip xmrig-Windows-x64-MSVC.zip
+          cp ../windows_build_msvc.zip xmrig-windows-x64-msvc.zip
           unzip -o ../windows_build_msvc.zip
           zip -u offline_miner_setup.zip xmrig.exe config.json WinRing0x64.sys
           rm -f xmrig.exe config.json WinRing0x64.sys
-          cp ../windows_build_gcc.zip xmrig-Windows-x64-GCC.zip
+          cp ../windows_build_gcc.zip xmrig-windows-x64-gcc.zip
 
-          # Linux: static first (x64, ARM64)
-          cp ../linux_x64_static.tar.gz xmrig-Linux-x64-static.tar.gz
-          cp ../linux_arm64_static.tar.gz xmrig-Linux-ARM64-static.tar.gz
+          # Linux: static first (x64, arm64)
+          cp ../linux_x64_static.tar.gz xmrig-linux-x64-static.tar.gz
+          cp ../linux_arm64_static.tar.gz xmrig-linux-arm64-static.tar.gz
 
           # Linux: dynamic by distro (x64)
-          cp ../linux_x64_ubuntu24.04_noble.tar.gz xmrig-Ubuntu-24.04-noble-x64.tar.gz
-          cp ../linux_x64_ubuntu22.04_jammy.tar.gz xmrig-Ubuntu-22.04-jammy-x64.tar.gz
+          cp ../linux_x64_ubuntu24.04_noble.tar.gz xmrig-ubuntu-24.04-noble-x64.tar.gz
+          cp ../linux_x64_ubuntu22.04_jammy.tar.gz xmrig-ubuntu-22.04-jammy-x64.tar.gz
 
-          # Linux: dynamic by distro (ARM64)
-          cp ../linux_arm64_ubuntu24.04_noble.tar.gz xmrig-Ubuntu-24.04-noble-ARM64.tar.gz
-          cp ../linux_arm64_ubuntu22.04_jammy.tar.gz xmrig-Ubuntu-22.04-jammy-ARM64.tar.gz
+          # Linux: dynamic by distro (arm64)
+          cp ../linux_arm64_ubuntu24.04_noble.tar.gz xmrig-ubuntu-24.04-noble-arm64.tar.gz
+          cp ../linux_arm64_ubuntu22.04_jammy.tar.gz xmrig-ubuntu-22.04-jammy-arm64.tar.gz
 
           # macOS
-          cp ../macos_build.tar.gz xmrig-macOS-ARM64.tar.gz
-          cp ../macos_build_intel.tar.gz xmrig-macOS-x64-Intel.tar.gz
+          cp ../macos_build.tar.gz xmrig-macos-arm64.tar.gz
+          cp ../macos_build_x64.tar.gz xmrig-macos-x64.tar.gz
 
           # Default fallback: Windows = MSVC, Linux = x64 static
-          cp xmrig-Windows-x64-MSVC.zip xmrig.zip
-          cp xmrig-Linux-x64-static.tar.gz xmrig.tar.gz
+          cp xmrig-windows-x64-msvc.zip xmrig.zip
+          cp xmrig-linux-x64-static.tar.gz xmrig.tar.gz
 
-          git add xmrig-Windows-x64-MSVC.zip xmrig-Windows-x64-GCC.zip \
-            xmrig-Linux-x64-static.tar.gz xmrig-Linux-ARM64-static.tar.gz \
-            xmrig-Ubuntu-24.04-noble-x64.tar.gz xmrig-Ubuntu-22.04-jammy-x64.tar.gz \
-            xmrig-Ubuntu-24.04-noble-ARM64.tar.gz xmrig-Ubuntu-22.04-jammy-ARM64.tar.gz \
-            xmrig-macOS-ARM64.tar.gz xmrig-macOS-x64-Intel.tar.gz \
+          git add xmrig-windows-x64-msvc.zip xmrig-windows-x64-gcc.zip \
+            xmrig-linux-x64-static.tar.gz xmrig-linux-arm64-static.tar.gz \
+            xmrig-ubuntu-24.04-noble-x64.tar.gz xmrig-ubuntu-22.04-jammy-x64.tar.gz \
+            xmrig-ubuntu-24.04-noble-arm64.tar.gz xmrig-ubuntu-22.04-jammy-arm64.tar.gz \
+            xmrig-macos-arm64.tar.gz xmrig-macos-x64.tar.gz \
             xmrig.tar.gz xmrig.zip offline_miner_setup.zip
           git commit -m "xmrig $GITHUB_REF_NAME based release"
           git push
